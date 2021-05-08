@@ -2,7 +2,7 @@ import copy
 import logging
 import os
 from collections import defaultdict
-from collections.abc import Mapping
+from typing import Any, Mapping
 
 from . import sslutils
 from .utils import get_port
@@ -27,7 +27,7 @@ def _merge_dict(base_dict, override_dict):
     return rv
 
 
-class Config(Mapping):
+class Config(Mapping[str, Any]):
     """wptserve config
 
     Inherits from Mapping for backwards compatibility with the old dict-based config"""
