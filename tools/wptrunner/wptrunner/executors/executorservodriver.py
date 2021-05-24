@@ -10,7 +10,7 @@ from .base import (Protocol,
                    TestharnessExecutor,
                    TimedRunner,
                    strip_server)
-from ..webdriver_server import wait_for_service
+from ..environment import wait_for_service
 
 webdriver = None
 ServoCommandExtensions = None

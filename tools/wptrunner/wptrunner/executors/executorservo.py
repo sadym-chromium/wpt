@@ -22,7 +22,6 @@ from .base import (ConnectionlessProtocol,
                    WdspecProtocol)
 from .process import ProcessTestExecutor
 from ..browsers.base import browser_command
-from ..webdriver_server import ServoDriverServer
 
 
 pytestrunner = None
@@ -279,14 +278,6 @@ class ServoRefTestExecutor(ProcessTestExecutor):
             self.logger.process_output(self.proc.pid,
                                        line,
                                        " ".join(self.command))
-
-
-class ServoDriverProtocol(WdspecProtocol):
-    server_cls = ServoDriverServer
-
-
-class ServoWdspecExecutor(WdspecExecutor):
-    protocol_cls = ServoDriverProtocol
 
 
 class ServoTimedRunner(TimedRunner):
