@@ -362,7 +362,7 @@ class TestDriverProtocolPart(ProtocolPart):
         """Switch to a window given a wptrunner window id
 
         :param str wptrunner_id: Testdriver-specific id for the target window
-        :param str initial: WebDriver window id for the test window"""
+        :param str initial_window: WebDriver window id for the test window"""
         if wptrunner_id is None:
             return
 
