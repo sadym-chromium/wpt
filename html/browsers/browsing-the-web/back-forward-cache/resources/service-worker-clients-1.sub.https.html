@@ -1,0 +1,55 @@
+<!doctype html>
+<script src="/resources/testharness.js"></script>
+<script src="/common/utils.js"></script>
+<script src="/common/PrefixedLocalStorage.js"></script>
+<script src="helper.sub.js"></script>
+<script>
+async function popResult(t, id) {
+  const stashURL = new URL('./stash.py', location);
+  stashURL.searchParams.set('id', id);
+  stashURL.searchParams.set('action', 'pop');
+
+  while (true) {
+    await new Promise(resolve => { t.step_timeout(resolve, 100); });
+    const response = await fetch(stashURL);
+    const j = await response.text();
+    if (j !== '')
+      return j;
+  }
+}
+
+const t = async_test('ServiceWorker clients');
+const id = token();
+
+runTest(
+  t,
+  () => {
+    const w = window.open('./clients-matchall-iframe.html?key=clients-1&id=' + id);
+    window.onmessage = () => {
+      w.close();
+      location.href = 'https://{{hosts[alt][www]}}:{{ports[https][0]}}/html/browsers/browsing-the-web/back-forward-cache/resources/service-worker-clients-2.sub.https.html?id=' + id;
+    };
+  },
+  (isBFCached, observedEvents) => {
+    assert_implements_optional(isBFCached, 'Should be BFCached');
+    const w = window.open('./clients-matchall-iframe.html?key=clients-3&id=' + id);
+    window.onmessage = t.step_func(async () => {
+      w.close();
+
+      const clients1 = JSON.parse(await popResult(t, id));
+      assert_true(clients1.indexOf(location.href) >= 0,
+        'Clients#matchAll() should contain the page before BFCached');
+
+      const clients2 = JSON.parse(await popResult(t, id));
+      assert_false(clients2.indexOf(location.href) >= 0,
+        'Clients#matchAll() should not contain the page while in BFCache');
+
+      const clients3 = JSON.parse(await popResult(t, id));
+      assert_true(clients3.indexOf(location.href) >= 0,
+        'Clients#matchAll() should contain the page after BFCached');
+
+      t.done();
+    });
+  }
+);
+</script>

@@ -1,0 +1,8 @@
+<!doctype html>
+<script>
+const id = new URL(location).searchParams.get('id');
+const w = window.open('https://{{host}}:{{ports[https][0]}}/html/browsers/browsing-the-web/back-forward-cache/resources/clients-matchall-iframe.html?key=clients-2&id=' + id);
+window.onmessage = () => {
+  setTimeout(() => history.back(), 100);
+};
+</script>

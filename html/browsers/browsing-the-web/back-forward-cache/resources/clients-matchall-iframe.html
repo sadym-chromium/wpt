@@ -1,0 +1,15 @@
+<!doctype html>
+<script>
+fetch('/get-clients-matchall')
+  .then(r => r.json())
+  .then(j => {
+      const id = new URL(location).searchParams.get('id');
+      const url = new URL('./stash.py', location);
+      url.searchParams.set('action', 'push');
+      url.searchParams.set('id', id);
+      url.searchParams.set('value', JSON.stringify(j));
+      return fetch(url, {method: 'POST'});
+    })
+  .then(() => window.opener.postMessage("Done", "*"))
+  .catch(() => window.opener.postMessage("Error", "*"));
+</script>
