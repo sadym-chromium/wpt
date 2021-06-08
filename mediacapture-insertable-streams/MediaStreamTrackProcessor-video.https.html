@@ -12,26 +12,28 @@
 <script src=/resources/testharnessreport.js></script>
 <script>
 promise_test(async t => {
-  const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+  const stream = await navigator.mediaDevices.getUserMedia({video: true});
   const track = stream.getTracks()[0];
   const processor = new MediaStreamTrackProcessor({track: track});
   const reader = processor.readable.getReader();
   const doneValue = await reader.read();
   assert_false(doneValue.done)
-  assert_true(doneValue.value instanceof AudioData);
+  assert_true(doneValue.value instanceof VideoFrame);
   doneValue.value.close();
   track.stop();
+  assert_false(doneValue.done)
+  assert_true(doneValue.value instanceof VideoFrame);
   return reader.closed;
-}, "Tests that the reader of an audio MediaStreamTrackProcessor produces AudioData objects and is closed on track stop");
+}, "Tests that the reader of a video MediaStreamTrackProcessor produces video frames and is closed on track stop");
 
 promise_test(async t => {
-  const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+  const stream = await navigator.mediaDevices.getUserMedia({video: true});
   const track = stream.getTracks()[0];
   const processor = new MediaStreamTrackProcessor({track: track});
   const worker = new Worker('MediaStreamTrackProcessor-worker.js');
   const promise = new Promise(resolve => {
     worker.onmessage = msg => {
-      if (msg.data instanceof AudioData) {
+      if (msg.data instanceof VideoFrame) {
         msg.data.close();
         track.stop();
       } else if (msg.data == 'closed') {
@@ -42,7 +44,7 @@ promise_test(async t => {
   worker.postMessage({readable: processor.readable},
                      [processor.readable]);
   return promise;
-}, "Tests that the reader of an audio MediaStreamTrackProcessor produces AudioData objects and is closed on track stop while running on a worker");
+}, "Tests that the reader of a video MediaStreamTrackProcessor produces VideoFrame objects and is closed on track stop while running on a worker");
 </script>
 </body>
 </html>
