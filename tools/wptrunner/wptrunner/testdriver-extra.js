@@ -179,6 +179,10 @@
         return create_action("delete_all_cookies", {context});
     };
 
+    window.test_driver_internal.subscribe = function(event, context=null) {
+        return create_action("subscribe", {event, context});
+    };
+
     window.test_driver_internal.get_all_cookies = function(context=null) {
         return create_action("get_all_cookies", {context});
     };

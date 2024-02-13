@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 
+import asyncio
 import json
 import os
 import socket
@@ -35,6 +36,7 @@ from .protocol import (BaseProtocolPart,
                        RPHRegistrationsProtocolPart,
                        FedCMProtocolPart,
                        VirtualSensorProtocolPart,
+                       EventsProtocolPart,
                        merge_dicts)
 
 from webdriver.client import Session
@@ -432,6 +434,17 @@ class WebDriverVirtualSensorPart(VirtualSensorProtocolPart):
         return self.webdriver.send_session_command("GET", "sensor/%s" % sensor_type)
 
 
+class WebDriverEventsProtocolPart(EventsProtocolPart):
+    def setup(self):
+        self.webdriver = self.parent.webdriver
+        # Loop is needed, as WebDiver BiDi commands are coroutines.
+        self.loop = self.parent.loop
+
+    def subscribe(self, event):
+        self.logger.info("Subscribing to event %s" % event)
+        return self.loop.run_until_complete(self.webdriver.bidi_session.session.subscribe(events=[event], contexts=None))
+
+
 class WebDriverProtocol(Protocol):
     implements = [WebDriverBaseProtocolPart,
                   WebDriverTestharnessProtocolPart,
@@ -455,6 +468,9 @@ class WebDriverProtocol(Protocol):
     def __init__(self, executor, browser, capabilities, **kwargs):
         super().__init__(executor, browser)
         self.capabilities = capabilities
+        # Overriden in WebDriverBidiProtocol.
+        self.enable_bidi = True
+        self.loop = asyncio.new_event_loop()
         if hasattr(browser, "capabilities"):
             if self.capabilities is None:
                 self.capabilities = browser.capabilities
@@ -476,14 +492,19 @@ class WebDriverProtocol(Protocol):
         self.webdriver = None
 
     def connect(self):
-        """Connect to browser via WebDriver."""
+        """Connect to browser via WebDriver and crete a WebDriver session."""
         self.logger.debug("Connecting to WebDriver on URL: %s" % self.url)
 
         host, port = self.url.split(":")[1].strip("/"), self.url.split(':')[-1].strip("/")
 
         capabilities = {"alwaysMatch": self.capabilities}
-        self.webdriver = Session(host, port, capabilities=capabilities)
+
+        enable_bidi = self.enable_bidi if hasattr(self, "enable_bidi") else False
+
+        self.webdriver = Session(host, port, capabilities=capabilities, enable_bidi=enable_bidi)
         self.webdriver.start()
+        if enable_bidi:
+            self.loop.run_until_complete(self.webdriver.bidi_session.start())
 
     def teardown(self):
         self.logger.debug("Hanging up on WebDriver session")
@@ -511,6 +532,16 @@ class WebDriverProtocol(Protocol):
 
     def after_connect(self):
         self.testharness.load_runner(self.executor.last_environment["protocol"])
+
+
+class WebDriverBidiProtocol(WebDriverProtocol):
+    implements = [WebDriverEventsProtocolPart,
+                  *(part for part in WebDriverProtocol.implements)
+                  ]
+
+    def __init__(self, executor, browser, capabilities, **kwargs):
+        super().__init__(executor, browser, capabilities, **kwargs)
+        self.enable_bidi = True
 
 
 class WebDriverRun(TimedRunner):

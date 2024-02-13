@@ -321,6 +321,19 @@ class AccessibilityProtocolPart(ProtocolPart):
         pass
 
 
+class EventsProtocolPart(ProtocolPart):
+    """Protocol part for managing events"""
+    __metaclass__ = ABCMeta
+    name = "events"
+
+    @abstractmethod
+    def subscribe(self, event):
+        """Subscribe to an event.
+
+        :param event: The name of the event to subscribe to."""
+        pass
+
+
 class CookiesProtocolPart(ProtocolPart):
     """Protocol part for managing cookies"""
     __metaclass__ = ABCMeta

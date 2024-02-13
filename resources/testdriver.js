@@ -185,6 +185,22 @@
         },
 
         /**
+         * Subscribe to event.
+         *
+         * Events will be Matches the behaviour of the `session.subscribe
+         * <https://w3c.github.io/webdriver-bidi/#command-session-subscribe>`_ WebDriver BiDi command.
+         *
+         * @param {String} event - The event to subscribe to.
+         * @param {WindowProxy} context - Browsing context in which
+         *                                to run the call, or null for the current
+         *                                browsing context.
+         * @return {Promise<never>}
+         */
+        subscribe: function(event, context=null) {
+            return window.test_driver_internal.subscribe(event, context);
+        },
+
+        /**
          * Get details for all cookies in the current context.
          * See https://w3c.github.io/webdriver/#get-all-cookies
          *
@@ -1051,6 +1067,10 @@
 
         async get_all_cookies(context=null) {
             throw new Error("get_all_cookies() is not implemented by testdriver-vendor.js");
+        },
+
+        async subscribe(event, context=null) {
+            throw new Error("subscribe() is not implemented by testdriver-vendor.js");
         },
 
         async get_named_cookie(name, context=null) {

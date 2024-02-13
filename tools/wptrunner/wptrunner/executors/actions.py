@@ -14,6 +14,18 @@ class ClickAction:
         self.protocol.click.element(element)
 
 
+class SubscribeAction:
+    name = "subscribe"
+
+    def __init__(self, logger, protocol):
+        self.logger = logger
+        self.protocol = protocol
+
+    def __call__(self, payload):
+        self.logger.debug("Subscribing to event: %s" % payload["event"])
+        return self.protocol.events.subscribe(payload["event"])
+
+
 class DeleteAllCookiesAction:
     name = "delete_all_cookies"
 
@@ -477,4 +489,5 @@ actions = [ClickAction,
            CreateVirtualSensorAction,
            UpdateVirtualSensorAction,
            RemoveVirtualSensorAction,
-           GetVirtualSensorInformationAction]
+           GetVirtualSensorInformationAction,
+           SubscribeAction]

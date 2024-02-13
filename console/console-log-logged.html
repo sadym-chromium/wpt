@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Test console log are present</title>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/resources/testdriver.js"></script>
+<script>
+    promise_test(async t => {
+        await test_driver.subscribe("log.entryAdded");
+        console.log("!!@@##")
+    }, "Subscribe to log events");
+</script>
+<!--
+        await (() => new Promise(resolve => {
+            setTimeout(resolve, 1000);
+        }))();
+-->
