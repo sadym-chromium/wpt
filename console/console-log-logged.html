@@ -6,12 +6,18 @@
 <script src="/resources/testdriver.js"></script>
 <script>
     promise_test(async t => {
+        const some_message = "SOME MESSAGE";
         await test_driver.subscribe("log.entryAdded");
-        console.log("!!@@##")
+        console.log(some_message)
+        let resolve;
+        const promise = new Promise(r => resolve = r);
+
+        window.test_driver_internal.event_target.addEventListener("log.entryAdded", event => {
+            resolve(event)
+        });
+
+        const event = await promise;
+        const data = JSON.parse(event.data);
+        assert_equals(data.args[0].value, some_message)
     }, "Subscribe to log events");
 </script>
-<!--
-        await (() => new Promise(resolve => {
-            setTimeout(resolve, 1000);
-        }))();
--->

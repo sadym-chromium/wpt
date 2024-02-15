@@ -8,6 +8,7 @@ import threading
 import time
 import traceback
 import uuid
+from typing import Any, Awaitable, Callable, List, Optional, Mapping, MutableMapping
 from urllib.parse import urljoin
 
 from .base import (CallbackHandler,
@@ -475,6 +476,14 @@ class WebDriverEventsProtocolPart(EventsProtocolPart):
         self.logger.info("Subscribing to event %s" % event)
         return await self.webdriver.bidi_session.session.subscribe(events=[event], contexts=None)
 
+    def add_event_listener(
+            self,
+            fn: Callable[[str, Mapping[str, Any]], Awaitable[Any]],
+            name: Optional[str]=None
+    ) -> Callable[[], None]:
+        print("adding event listener", name)
+        return self.webdriver.bidi_session.add_event_listener(name=name, fn=fn)
+
 
 class WebDriverProtocol(Protocol):
     implements = [WebDriverBaseProtocolPart,
@@ -536,11 +545,6 @@ class WebDriverProtocol(Protocol):
         self.webdriver.start()
         if enable_bidi:
             self.loop.run_until_complete(self.webdriver.bidi_session.start(self.loop))
-
-            async def process_bidi_event(method, params):
-                print("bidi event received", method, params)
-
-            self.webdriver.bidi_session.add_event_listener(name=None, fn=process_bidi_event)
 
     def teardown(self):
         self.logger.debug("Hanging up on WebDriver session")
@@ -679,6 +683,12 @@ class WebDriverTestharnessExecutor(TestharnessExecutor):
 
         # Wait until about:blank has been loaded
         protocol.base.execute_script(self.window_loaded_script, asynchronous=True)
+
+        async def process_bidi_event(method, params):
+            print("bidi event received", method, params)
+            protocol.testdriver.send_message(-1, "event", method, json.dumps(params))
+
+        protocol.events.add_event_listener(process_bidi_event)
 
         handler = WebDriverCallbackHandler(self.logger, protocol, test_window)
         protocol.webdriver.url = url

@@ -49,6 +49,10 @@
      * @namespace {test_driver}
      */
     window.test_driver = {
+        get event_target() {
+            return window.test_driver_internal.event_target;
+        },
+
         /**
          * Set the context in which testharness.js is loaded
          *
@@ -1050,6 +1054,11 @@
          * implementation of one of the methods is not available.
          */
         in_automation: false,
+
+        get event_target() {
+            throw new Error("event_target is not implemented by testdriver-vendor.js");
+        },
+
 
         async click(element, coords) {
             if (this.in_automation) {
