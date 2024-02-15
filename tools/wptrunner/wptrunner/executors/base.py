@@ -1,5 +1,6 @@
 # mypy: allow-untyped-defs
 
+import asyncio
 import base64
 import hashlib
 import io
@@ -755,7 +756,7 @@ class CallbackHandler:
         try:
             with ActionContext(self.logger, self.protocol, payload.get("context")):
                 try:
-                    result = action_handler(payload)
+                    maybe_coroutine_result = action_handler(payload)
                 except AttributeError as e:
                     # If we fail to get an attribute from the protocol presumably that's a
                     # ProtocolPart we don't implement
@@ -776,8 +777,22 @@ class CallbackHandler:
             self._send_message(cmd_id, "complete", "error")
             raise
         else:
-            self.logger.debug(f"Action {action} completed with result {result}")
-            return_message = {"result": result}
+            if asyncio.iscoroutine(maybe_coroutine_result):
+                async def awaited_result_coroutine():
+                    """
+                    In case of the action_handler returning a coroutine, we need to await for its result and return a
+                    coroutine with the result to be awaited by the caller.
+                    """
+                    self.logger.debug(f"Action '{action}' is a coroutine. Waiting for result.")
+                    awaited_result = await maybe_coroutine_result
+                    self.logger.debug(f"Action {action} completed with result {awaited_result}")
+                    self._send_message(cmd_id, "complete", "success", json.dumps({"result": awaited_result}))
+                    return False, None
+
+                return awaited_result_coroutine()
+
+            self.logger.debug(f"Action {action} completed with result {maybe_coroutine_result}")
+            return_message = {"result": maybe_coroutine_result}
             self._send_message(cmd_id, "complete", "success", json.dumps(return_message))
 
         return False, None

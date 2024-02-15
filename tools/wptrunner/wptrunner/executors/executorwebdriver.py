@@ -55,8 +55,39 @@ class WebDriverBaseProtocolPart(BaseProtocolPart):
         self.webdriver = self.parent.webdriver
 
     def execute_script(self, script, asynchronous=False, args=None):
+        """
+        This method executes JavaScript and if `asynchronous` is True, it waits for the result.
+        """
         method = self.webdriver.execute_async_script if asynchronous else self.webdriver.execute_script
         return method(script, args=args)
+
+    async def async_execute_script(self, script, context=None):
+        """
+        This method is analog of `execute_async_script`, but works via BiDi. When executed, the script will be provided
+        with `resolve` delegate, which finishes the execution. After that the coroutine is finished as well. This
+        signature is required for backward compatibility with `execute_async_script` run via WebDriver Classic.
+        """
+        if not self.webdriver.bidi_session:
+            # Fallback to the Classic way, if BiDi is not available.
+            return execute_script(script, asynchronous=True, context=context)
+
+        wrapped_script = """async function(...args){
+                return new Promise((resolve, reject) => {
+                    args.push((value)=>resolve(JSON.stringify(value)));
+                    (async function(){
+                        %s
+                    }).apply(null, args);
+                })
+            }""" % script
+
+        result = await self.webdriver.bidi_session.script.call_function(
+            function_declaration=wrapped_script,
+            target={
+                "context": context if context else self.current_window},
+            await_promise=True)
+        if result["type"] != "string":
+            raise Exception("Unexpected result")
+        return json.loads(result["value"])
 
     def set_timeout(self, timeout):
         try:
@@ -440,9 +471,9 @@ class WebDriverEventsProtocolPart(EventsProtocolPart):
         # Loop is needed, as WebDiver BiDi commands are coroutines.
         self.loop = self.parent.loop
 
-    def subscribe(self, event):
+    async def subscribe(self, event):
         self.logger.info("Subscribing to event %s" % event)
-        return self.loop.run_until_complete(self.webdriver.bidi_session.session.subscribe(events=[event], contexts=None))
+        return await self.webdriver.bidi_session.session.subscribe(events=[event], contexts=None)
 
 
 class WebDriverProtocol(Protocol):
@@ -504,10 +535,24 @@ class WebDriverProtocol(Protocol):
         self.webdriver = Session(host, port, capabilities=capabilities, enable_bidi=enable_bidi)
         self.webdriver.start()
         if enable_bidi:
-            self.loop.run_until_complete(self.webdriver.bidi_session.start())
+            self.loop.run_until_complete(self.webdriver.bidi_session.start(self.loop))
+
+            async def process_bidi_event(method, params):
+                print("bidi event received", method, params)
+
+            self.webdriver.bidi_session.add_event_listener(name=None, fn=process_bidi_event)
 
     def teardown(self):
         self.logger.debug("Hanging up on WebDriver session")
+        if hasattr(self, "enable_bidi") and self.enable_bidi:
+            try:
+                self.loop.run_until_complete(self.webdriver.bidi_session.end())
+            except Exception as e:
+                message = str(getattr(e, "message", ""))
+                if message:
+                    message += "\n"
+                message += traceback.format_exc()
+                self.logger.debug(message)
         try:
             self.webdriver.end()
         except Exception as e:
@@ -516,6 +561,7 @@ class WebDriverProtocol(Protocol):
                 message += "\n"
             message += traceback.format_exc()
             self.logger.debug(message)
+        self.loop.stop()
         self.webdriver = None
 
     def is_alive(self):
@@ -637,26 +683,35 @@ class WebDriverTestharnessExecutor(TestharnessExecutor):
         handler = WebDriverCallbackHandler(self.logger, protocol, test_window)
         protocol.webdriver.url = url
 
-        while True:
-            result = protocol.base.execute_script(
-                self.script_resume, asynchronous=True, args=[strip_server(url)])
+        async def process_messages():
+            while True:
+                result = await protocol.base.async_execute_script(self.script_resume, context=test_window)
 
-            # As of 2019-03-29, WebDriver does not define expected behavior for
-            # cases where the browser crashes during script execution:
-            #
-            # https://github.com/w3c/webdriver/issues/1308
-            if not isinstance(result, list) or len(result) != 2:
-                try:
-                    is_alive = self.is_alive()
-                except error.WebDriverException:
-                    is_alive = False
+                # As of 2019-03-29, WebDriver does not define expected behavior for
+                # cases where the browser crashes during script execution:
+                #
+                # https://github.com/w3c/webdriver/issues/1308
+                if not isinstance(result, list) or len(result) != 2:
+                    try:
+                        is_alive = self.is_alive()
+                    except error.WebDriverException:
+                        is_alive = False
+                    if not is_alive:
+                        raise Exception("Browser crashed during script execution.")
 
-                if not is_alive:
-                    raise Exception("Browser crashed during script execution.")
+                maybe_coroutine_result = handler(result)
+                if asyncio.iscoroutine(maybe_coroutine_result):
+                    result = await maybe_coroutine_result
+                else:
+                    result = maybe_coroutine_result
 
-            done, rv = handler(result)
-            if done:
-                break
+                done, rv = result
+                if done:
+                    return rv
+
+                await asyncio.sleep(0)
+
+        rv = protocol.loop.run_until_complete(process_messages())
 
         # Attempt to cleanup any leftover windows, if allowed. This is
         # preferable as it will blame the correct test if something goes wrong
