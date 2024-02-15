@@ -500,7 +500,7 @@ class WebDriverProtocol(Protocol):
         super().__init__(executor, browser)
         self.capabilities = capabilities
         # Overriden in WebDriverBidiProtocol.
-        self.enable_bidi = True
+        self.enable_bidi = False
         self.loop = asyncio.new_event_loop()
         if hasattr(browser, "capabilities"):
             if self.capabilities is None:
