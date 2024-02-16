@@ -169,11 +169,11 @@
 
     window.test_driver_internal.in_automation = true;
 
-    window.test_driver_bidi_internal.session.subscribe = function(event, context=null) {
+    window.test_driver_internal.bidi.session.subscribe = function(event, context=null) {
         return create_action("subscribe", {event, context});
     };
 
-    window.test_driver_bidi_internal.log.entryAdded.on = function (callback) {
+    window.test_driver_internal.bidi.log.entryAdded.on = function (callback) {
         event_target.addEventListener("log.entryAdded", callback);
         return () => event_target.removeEventListener("log.entryAdded", callback);
     };

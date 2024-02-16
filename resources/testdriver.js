@@ -69,7 +69,7 @@
                  * @return {Promise<never>}
                  */
                 subscribe: function (event, context = null) {
-                    return window.test_driver_bidi_internal.session.subscribe(event, context);
+                    return window.test_driver_internal.bidi.session.subscribe(event, context);
                 }
             },
             /**
@@ -88,7 +88,7 @@
                      * @returns {function(): void} - A function to call to remove the event listener.
                      */
                     on: function (callback) {
-                        return window.test_driver_bidi_internal.log.entryAdded.on(callback);
+                        return window.test_driver_internal.bidi.log.entryAdded.on(callback);
                     },
                     /**
                      * Get a promise that resolves the next time the `log.entryAdded
@@ -98,7 +98,7 @@
                      */
                     once: function () {
                         return new Promise((resolve) => {
-                            const remove_handle = window.test_driver_bidi_internal.log.entryAdded.on(
+                            const remove_handle = window.test_driver_internal.bidi.log.entryAdded.on(
                                 (event) => {
                                     remove_handle();
                                     resolve(event);
@@ -1087,21 +1087,6 @@
         },
     };
 
-    window.test_driver_bidi_internal = {
-        session: {
-            subscribe(event, context=null) {
-                throw new Error("subscribe() is not implemented by testdriver-vendor.js");
-            },
-        },
-        log: {
-            entryAdded: {
-                on: function () {
-                    throw new Error("bidi.log.entryAdded.on is not implemented by testdriver-vendor.js");
-                }
-            }
-        }
-    }
-
     window.test_driver_internal = {
         /**
          * This flag should be set to `true` by any code which implements the
@@ -1110,6 +1095,21 @@
          * implementation of one of the methods is not available.
          */
         in_automation: false,
+
+        bidi: {
+            session: {
+                subscribe(event, context=null) {
+                    throw new Error("subscribe() is not implemented by testdriver-vendor.js");
+                },
+            },
+            log: {
+                entryAdded: {
+                    on: function () {
+                        throw new Error("bidi.log.entryAdded.on is not implemented by testdriver-vendor.js");
+                    }
+                }
+            }
+        },
 
         async click(element, coords) {
             if (this.in_automation) {
