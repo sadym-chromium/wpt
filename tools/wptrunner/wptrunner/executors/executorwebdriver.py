@@ -487,6 +487,7 @@ class WebDriverEventsProtocolPart(EventsProtocolPart):
 
 
 class WebDriverProtocol(Protocol):
+    enable_bidi = False
     implements = [WebDriverBaseProtocolPart,
                   WebDriverTestharnessProtocolPart,
                   WebDriverSelectorProtocolPart,
@@ -510,7 +511,6 @@ class WebDriverProtocol(Protocol):
         super().__init__(executor, browser)
         self.capabilities = capabilities
         # Overriden in WebDriverBidiProtocol.
-        self.enable_bidi = False
         self.loop = asyncio.new_event_loop()
         if hasattr(browser, "capabilities"):
             if self.capabilities is None:
@@ -586,13 +586,10 @@ class WebDriverProtocol(Protocol):
 
 
 class WebDriverBidiProtocol(WebDriverProtocol):
+    enable_bidi = True
     implements = [WebDriverEventsProtocolPart,
                   *(part for part in WebDriverProtocol.implements)
                   ]
-
-    def __init__(self, executor, browser, capabilities, **kwargs):
-        super().__init__(executor, browser, capabilities, **kwargs)
-        self.enable_bidi = True
 
 
 class WebDriverRun(TimedRunner):
