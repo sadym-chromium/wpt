@@ -683,7 +683,7 @@ class WebDriverTestharnessExecutor(TestharnessExecutor):
         protocol.base.execute_script(self.window_loaded_script, asynchronous=True)
 
         if protocol.events:
-            # If protocol implements events, subscribe to the events and forward them to tests.
+            # If protocol implements events, forward them to tests.
             async def process_bidi_event(method, params):
                 print("bidi event received", method, params)
                 protocol.testdriver.send_message(-1, "event", method, json.dumps(params))

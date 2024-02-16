@@ -170,7 +170,7 @@
     window.test_driver_internal.in_automation = true;
 
     window.test_driver_internal.bidi.session.subscribe = function(event, context=null) {
-        return create_action("subscribe", {event, context});
+        return create_action("bidi.session.subscribe", {event, context});
     };
 
     window.test_driver_internal.bidi.log.entryAdded.on = function (callback) {

@@ -14,8 +14,8 @@ class ClickAction:
         self.protocol.click.element(element)
 
 
-class SubscribeAction:
-    name = "subscribe"
+class BidiSessionSubscribeAction:
+    name = "bidi.session.subscribe"
 
     def __init__(self, logger, protocol):
         self.logger = logger
@@ -490,4 +490,4 @@ actions = [ClickAction,
            UpdateVirtualSensorAction,
            RemoveVirtualSensorAction,
            GetVirtualSensorInformationAction,
-           SubscribeAction]
+           BidiSessionSubscribeAction]
