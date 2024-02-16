@@ -1099,7 +1099,7 @@
         bidi: {
             session: {
                 subscribe(event, context=null) {
-                    throw new Error("subscribe() is not implemented by testdriver-vendor.js");
+                    throw new Error("bidi.session.subscribe() is not implemented by testdriver-vendor.js");
                 },
             },
             log: {
