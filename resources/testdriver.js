@@ -1105,7 +1105,7 @@
             log: {
                 entryAdded: {
                     on: function () {
-                        throw new Error("bidi.log.entryAdded.on is not implemented by testdriver-vendor.js");
+                        throw new Error("bidi.log.entryAdded is not implemented by testdriver-vendor.js");
                     }
                 }
             }
