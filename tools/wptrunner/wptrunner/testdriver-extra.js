@@ -173,7 +173,7 @@
         return create_action("bidi.session.subscribe", {event, context});
     };
 
-    window.test_driver_internal.bidi.log.entryAdded.on = function (callback) {
+    window.test_driver_internal.bidi.log.entry_added.on = function (callback) {
         event_target.addEventListener("log.entryAdded", callback);
         return () => event_target.removeEventListener("log.entryAdded", callback);
     };

@@ -10,7 +10,7 @@
         // Subscribe to log.entryAdded BiDi events.
         await test_driver.bidi.session.subscribe("log.entryAdded");
         // Add a listener for the log.entryAdded event.
-        const log_entry_promise = test_driver.bidi.log.entryAdded.once();
+        const log_entry_promise = test_driver.bidi.log.entry_added.once();
         // Emit a console.log message.
         console.log(some_message)
         // Wait for the log.entryAdded event to be received.
