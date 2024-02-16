@@ -540,16 +540,14 @@ class WebDriverProtocol(Protocol):
 
         capabilities = {"alwaysMatch": self.capabilities}
 
-        enable_bidi = self.enable_bidi if hasattr(self, "enable_bidi") else False
-
-        self.webdriver = Session(host, port, capabilities=capabilities, enable_bidi=enable_bidi)
+        self.webdriver = Session(host, port, capabilities=capabilities, enable_bidi=self.enable_bidi)
         self.webdriver.start()
-        if enable_bidi:
+        if self.enable_bidi:
             self.loop.run_until_complete(self.webdriver.bidi_session.start(self.loop))
 
     def teardown(self):
         self.logger.debug("Hanging up on WebDriver session")
-        if hasattr(self, "enable_bidi") and self.enable_bidi:
+        if self.enable_bidi:
             try:
                 self.loop.run_until_complete(self.webdriver.bidi_session.end())
             except Exception as e:
