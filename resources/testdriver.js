@@ -44,13 +44,70 @@
         return pointerInteractablePaintTree.indexOf(element) !== -1;
     }
 
-
     /**
      * @namespace {test_driver}
      */
     window.test_driver = {
-        get event_target() {
-            return window.test_driver_internal.event_target;
+        /**
+         * @namespace {bidi} - Represents `WebDriver BiDi <https://w3c.github.io/webdriver-bidi>`_ protocol.
+         */
+        bidi: {
+            /**
+             * `session <https://w3c.github.io/webdriver-bidi/#module-session>`_ module.
+             */
+            session: {
+                /**
+                 * Subscribe to event.
+                 *
+                 * Events will be Matches the behaviour of the `session.subscribe
+                 * <https://w3c.github.io/webdriver-bidi/#command-session-subscribe>`_ WebDriver BiDi command.
+                 *
+                 * @param {String} event - The event to subscribe to.
+                 * @param {WindowProxy} context - Browsing context in which
+                 *                                to run the call, or null for the current
+                 *                                browsing context.
+                 * @return {Promise<never>}
+                 */
+                subscribe: function (event, context = null) {
+                    return window.test_driver_bidi_internal.session.subscribe(event, context);
+                }
+            },
+            /**
+             * `log <https://w3c.github.io/webdriver-bidi/#module-log>`_ module.
+             */
+            log: {
+                /**
+                 * `log.entryAdded <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event.
+                 */
+                entryAdded: {
+                    /**
+                     * Add an event listener for the `log.entryAdded
+                     * <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event.
+                     *
+                     * @param callback {function(event): void} - The callback to call when the event is fired.
+                     * @returns {function(): void} - A function to call to remove the event listener.
+                     */
+                    on: function (callback) {
+                        return window.test_driver_bidi_internal.log.entryAdded.on(callback);
+                    },
+                    /**
+                     * Get a promise that resolves the next time the `log.entryAdded
+                     * <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event is fired.
+                     *
+                     * @returns {Promise<Object>}
+                     */
+                    once: function () {
+                        return new Promise((resolve) => {
+                            const remove_handle = window.test_driver_bidi_internal.log.entryAdded.on(
+                                (event) => {
+                                    remove_handle();
+                                    resolve(event);
+                                }
+                            );
+                        });
+                    },
+                }
+            }
         },
 
         /**
@@ -186,22 +243,6 @@
          */
         delete_all_cookies: function(context=null) {
             return window.test_driver_internal.delete_all_cookies(context);
-        },
-
-        /**
-         * Subscribe to event.
-         *
-         * Events will be Matches the behaviour of the `session.subscribe
-         * <https://w3c.github.io/webdriver-bidi/#command-session-subscribe>`_ WebDriver BiDi command.
-         *
-         * @param {String} event - The event to subscribe to.
-         * @param {WindowProxy} context - Browsing context in which
-         *                                to run the call, or null for the current
-         *                                browsing context.
-         * @return {Promise<never>}
-         */
-        subscribe: function(event, context=null) {
-            return window.test_driver_internal.subscribe(event, context);
         },
 
         /**
@@ -1043,8 +1084,23 @@
          */
         get_virtual_sensor_information: function(sensor_type, context=null) {
             return window.test_driver_internal.get_virtual_sensor_information(sensor_type, context);
-        }
+        },
     };
+
+    window.test_driver_bidi_internal = {
+        session: {
+            subscribe(event, context=null) {
+                throw new Error("subscribe() is not implemented by testdriver-vendor.js");
+            },
+        },
+        log: {
+            entryAdded: {
+                on: function () {
+                    throw new Error("bidi.log.entryAdded.on is not implemented by testdriver-vendor.js");
+                }
+            }
+        }
+    }
 
     window.test_driver_internal = {
         /**
@@ -1054,11 +1110,6 @@
          * implementation of one of the methods is not available.
          */
         in_automation: false,
-
-        get event_target() {
-            throw new Error("event_target is not implemented by testdriver-vendor.js");
-        },
-
 
         async click(element, coords) {
             if (this.in_automation) {
@@ -1076,10 +1127,6 @@
 
         async get_all_cookies(context=null) {
             throw new Error("get_all_cookies() is not implemented by testdriver-vendor.js");
-        },
-
-        async subscribe(event, context=null) {
-            throw new Error("subscribe() is not implemented by testdriver-vendor.js");
         },
 
         async get_named_cookie(name, context=null) {

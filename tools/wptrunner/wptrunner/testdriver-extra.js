@@ -2,6 +2,7 @@
 
 (function() {
     const pending = new Map();
+    const event_target = new EventTarget();
 
     let result = null;
     let ctx_cmd_id = 0;
@@ -41,10 +42,10 @@
             }
         } else if (data.type === "testdriver-event") {
             const event_name = data.status;
-            const event_data = data.message;
+            const event_data = JSON.parse(data.message);
             const event =new Event(event_name);
             event.data = event_data;
-            window.test_driver_internal.event_target.dispatchEvent(event);
+            event_target.dispatchEvent(event);
         }
     });
 
@@ -168,12 +169,14 @@
 
     window.test_driver_internal.in_automation = true;
 
-    const event_target = new EventTarget();
-    Object.defineProperty(window.test_driver_internal, "event_target", {
-        get: function() {
-            return event_target;
-        }
-    });
+    window.test_driver_bidi_internal.session.subscribe = function(event, context=null) {
+        return create_action("subscribe", {event, context});
+    };
+
+    window.test_driver_bidi_internal.log.entryAdded.on = function (callback) {
+        event_target.addEventListener("log.entryAdded", callback);
+        return () => event_target.removeEventListener("log.entryAdded", callback);
+    };
 
     window.test_driver_internal.set_test_context = function(context) {
         if (window.__wptrunner_message_queue) {
@@ -190,10 +193,6 @@
 
     window.test_driver_internal.delete_all_cookies = function(context=null) {
         return create_action("delete_all_cookies", {context});
-    };
-
-    window.test_driver_internal.subscribe = function(event, context=null) {
-        return create_action("subscribe", {event, context});
     };
 
     window.test_driver_internal.get_all_cookies = function(context=null) {

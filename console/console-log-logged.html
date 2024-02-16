@@ -5,19 +5,20 @@
 <script src="/resources/testharnessreport.js"></script>
 <script src="/resources/testdriver.js"></script>
 <script>
-    promise_test(async t => {
+    promise_test(async () => {
         const some_message = "SOME MESSAGE";
-        await test_driver.subscribe("log.entryAdded");
+        // Subscribe to log.entryAdded BiDi events.
+        await test_driver.bidi.session.subscribe("log.entryAdded");
+        // Add a listener for the log.entryAdded event.
+        const log_entry_promise = test_driver.bidi.log.entryAdded.once();
+        // Emit a console.log message.
         console.log(some_message)
-        let resolve;
-        const promise = new Promise(r => resolve = r);
-
-        window.test_driver_internal.event_target.addEventListener("log.entryAdded", event => {
-            resolve(event)
-        });
-
-        const event = await promise;
-        const data = JSON.parse(event.data);
-        assert_equals(data.args[0].value, some_message)
-    }, "Subscribe to log events");
+        // Wait for the log.entryAdded event to be received.
+        const event = await log_entry_promise;
+        // Assert the log.entryAdded event has the expected message.
+        const data = event.data;
+        assert_equals(data.args.length, 1);
+        const event_message = data.args[0];
+        assert_equals(event_message.value, some_message);
+    }, "Assert log event are logged");
 </script>
