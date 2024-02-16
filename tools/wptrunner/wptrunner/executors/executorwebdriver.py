@@ -62,7 +62,7 @@ class WebDriverBaseProtocolPart(BaseProtocolPart):
         method = self.webdriver.execute_async_script if asynchronous else self.webdriver.execute_script
         return method(script, args=args)
 
-    async def async_execute_script(self, script, context=None):
+    async def async_execute_script(self, script, context, args=None):
         """
         This method is analog of `execute_async_script`, but works via BiDi. When executed, the script will be provided
         with `resolve` delegate, which finishes the execution. After that the coroutine is finished as well. This
@@ -83,6 +83,7 @@ class WebDriverBaseProtocolPart(BaseProtocolPart):
 
         result = await self.webdriver.bidi_session.script.call_function(
             function_declaration=wrapped_script,
+            arguments=args,
             target={
                 "context": context if context else self.current_window},
             await_promise=True)
@@ -695,7 +696,14 @@ class WebDriverTestharnessExecutor(TestharnessExecutor):
 
         async def process_messages():
             while True:
-                result = await protocol.base.async_execute_script(self.script_resume, context=test_window)
+                # TODO: add bidi serialization / deserialization.
+                bidi_url_argument = {
+                    "type": "string",
+                    "value": strip_server(url)
+                }
+                result = await protocol.base.async_execute_script(
+                    self.script_resume, context=test_window,
+                    args=[bidi_url_argument])
 
                 # As of 2019-03-29, WebDriver does not define expected behavior for
                 # cases where the browser crashes during script execution:
