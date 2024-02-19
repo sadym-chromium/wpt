@@ -119,6 +119,24 @@ class ProtocolPart:
         pass
 
 
+class BidiScriptProtocolPart(ProtocolPart):
+    """Generic bits of protocol that are required for multiple test types"""
+    __metaclass__ = ABCMeta
+
+    name = "bidi_script"
+
+    @abstractmethod
+    async def async_call_function(self, script, context, args=None):
+        """
+        Executes the provided script in the given context in asynchronous mode.
+
+        :param str script: The js source to execute.
+        :param str context: The context in which to execute the script.
+        :param list args: The arguments to pass to the script.
+        """
+        pass
+
+
 class BaseProtocolPart(ProtocolPart):
     """Generic bits of protocol that are required for multiple test types"""
     __metaclass__ = ABCMeta

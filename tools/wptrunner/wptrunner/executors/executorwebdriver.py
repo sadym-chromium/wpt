@@ -37,6 +37,7 @@ from .protocol import (BaseProtocolPart,
                        RPHRegistrationsProtocolPart,
                        FedCMProtocolPart,
                        VirtualSensorProtocolPart,
+                       BidiScriptProtocolPart,
                        EventsProtocolPart,
                        merge_dicts)
 
@@ -61,35 +62,6 @@ class WebDriverBaseProtocolPart(BaseProtocolPart):
         """
         method = self.webdriver.execute_async_script if asynchronous else self.webdriver.execute_script
         return method(script, args=args)
-
-    async def async_execute_script(self, script, context, args=None):
-        """
-        This method is analog of `execute_async_script`, but works via BiDi. When executed, the script will be provided
-        with `resolve` delegate, which finishes the execution. After that the coroutine is finished as well. This
-        signature is required for backward compatibility with `execute_async_script` run via WebDriver Classic.
-        """
-        if not self.webdriver.bidi_session:
-            # Fallback to the Classic way, if BiDi is not available.
-            return self.execute_script(script, asynchronous=True, args=args)
-
-        wrapped_script = """async function(...args){
-                return new Promise((resolve, reject) => {
-                    args.push((value)=>resolve(JSON.stringify(value)));
-                    (async function(){
-                        %s
-                    }).apply(null, args);
-                })
-            }""" % script
-
-        result = await self.webdriver.bidi_session.script.call_function(
-            function_declaration=wrapped_script,
-            arguments=args,
-            target={
-                "context": context if context else self.current_window},
-            await_promise=True)
-        if result["type"] != "string":
-            raise Exception("Unexpected result")
-        return json.loads(result["value"])
 
     def set_timeout(self, timeout):
         try:
@@ -133,6 +105,26 @@ addEventListener("__test_restart", e => {e.preventDefault(); callback(true)})"""
                 self.logger.error(message)
                 break
         return False
+
+
+class WebDriverBidiScriptProtocolPart(BidiScriptProtocolPart):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.webdriver = None
+
+    def setup(self):
+        self.webdriver = self.parent.webdriver
+
+    async def async_call_function(self, script, context, args=None):
+        result = await self.webdriver.bidi_session.script.call_function(
+            function_declaration=script,
+            arguments=args,
+            target={
+                "context": context if context else self.current_window},
+            await_promise=True)
+        if result["type"] != "string":
+            raise Exception("Unexpected result")
+        return json.loads(result["value"])
 
 
 class WebDriverTestharnessProtocolPart(TestharnessProtocolPart):
@@ -467,7 +459,7 @@ class WebDriverVirtualSensorPart(VirtualSensorProtocolPart):
         return self.webdriver.send_session_command("GET", "sensor/%s" % sensor_type)
 
 
-class WebDriverEventsProtocolPart(EventsProtocolPart):
+class WebDriverBidiEventsProtocolPart(EventsProtocolPart):
     def __init__(self, parent):
         super().__init__(parent)
         self.webdriver = None
@@ -591,7 +583,8 @@ class WebDriverProtocol(Protocol):
 
 class WebDriverBidiProtocol(WebDriverProtocol):
     enable_bidi = True
-    implements = [WebDriverEventsProtocolPart,
+    implements = [WebDriverBidiEventsProtocolPart,
+                  WebDriverBidiScriptProtocolPart,
                   *(part for part in WebDriverProtocol.implements)
                   ]
 
@@ -706,9 +699,33 @@ class WebDriverTestharnessExecutor(TestharnessExecutor):
                     "type": "string",
                     "value": strip_server(url)
                 }
-                result = await protocol.base.async_execute_script(
-                    self.script_resume, context=test_window,
-                    args=[bidi_url_argument])
+                if protocol.bidi_script:
+                    # If `bidi_script` is available, use it. This is required to process the even loop while the bidi
+                    # command is executing.
+
+                    # As long as we want to be able to use scripts both in bidi and in classic mode, the script should
+                    # be wrapped to some harness to emulate the WebDriver Classic async script execution. The script
+                    # will be provided with the `resolve` delegate, which finishes the execution. After that the
+                    # coroutine is finished as well.
+                    wrapped_script = """async function(...args){
+                        return new Promise((resolve, reject) => {
+                            args.push((value)=>resolve(JSON.stringify(value)));
+                            (async function(){
+                                %s
+                            }).apply(null, args);
+                        })
+                    }""" % self.script_resume
+
+                    result = await protocol.bidi_script.async_call_function(
+                        wrapped_script, context=test_window,
+                        args=[bidi_url_argument])
+                else:
+                    # Fallback to the Classic way, if BiDi is not available.
+                    result = protocol.base.execute_script(
+                        self.script_resume, context=test_window,
+                        args=[bidi_url_argument])
+                    # Process other tasks in the event loop.
+                    await asyncio.sleep(0)
 
                 # As of 2019-03-29, WebDriver does not define expected behavior for
                 # cases where the browser crashes during script execution:
