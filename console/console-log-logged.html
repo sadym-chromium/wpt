@@ -8,7 +8,7 @@
     promise_test(async () => {
         const some_message = "SOME MESSAGE";
         // Enable log.entryAdded BiDi events.
-        await test_driver.bidi.log.entry_added.enable();
+        await test_driver.bidi.log.entry_added.subscribe();
         // Add a listener for the log.entryAdded event.
         const log_entry_promise = test_driver.bidi.log.entry_added.once();
         // Emit a console.log message.
@@ -19,6 +19,6 @@
         assert_equals(event.args.length, 1);
         const event_message = event.args[0];
         assert_equals(event_message.value, some_message);
-        await test_driver.bidi.log.entry_added.disable();
+        await test_driver.bidi.log.entry_added.unsubscribe();
     }, "Assert log event are logged");
 </script>

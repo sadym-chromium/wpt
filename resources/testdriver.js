@@ -61,22 +61,24 @@
                  */
                 entry_added: {
                     /**
-                     * Enable the `log.entryAdded` event.
+                     * Subscribe to the `log.entryAdded` event. This does not actual listeners. To listen to the event,
+                     * use `on` method.
                      * @return {Promise<void>}
                      */
-                    enable: async function () {
-                        return window.test_driver_internal.bidi.log.entry_added.enable();
+                    subscribe: async function () {
+                        return window.test_driver_internal.bidi.log.entry_added.subscribe();
                     },
                     /**
-                     * Disable the `log.entryAdded` event.
+                     * Unsubscribe from the `log.entryAdded` event.
                      * @return {Promise<void>}
                      */
-                    disable: async function () {
-                        return window.test_driver_internal.bidi.log.entry_added.disable();
+                    unsubscribe: async function () {
+                        return window.test_driver_internal.bidi.log.entry_added.subscribe();
                     },
                     /**
                      * Add an event listener for the `log.entryAdded
-                     * <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event.
+                     * <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event. Make sure `subscribe` is
+                     * called before using this method.
                      *
                      * @param callback {function(event): void} - The callback to call when the event is fired.
                      * @returns {function(): void} - A function to call to remove the event listener.
@@ -1093,11 +1095,11 @@
         bidi: {
             log: {
                 entry_added: {
-                    enable: function () {
-                        throw new Error("bidi.log.entry_added.enable is not implemented by testdriver-vendor.js");
+                    subscribe: function () {
+                        throw new Error("bidi.log.entry_added.subscribe is not implemented by testdriver-vendor.js");
                     },
-                    disable: function () {
-                        throw new Error("bidi.log.entry_added.disable is not implemented by testdriver-vendor.js");
+                    unsubscribe: function () {
+                        throw new Error("bidi.log.entry_added.unsubscribe is not implemented by testdriver-vendor.js");
                     },
                     on: function () {
                         throw new Error("bidi.log.entry_added.on is not implemented by testdriver-vendor.js");

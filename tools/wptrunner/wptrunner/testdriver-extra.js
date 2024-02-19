@@ -177,11 +177,11 @@
 
     window.test_driver_internal.in_automation = true;
 
-    window.test_driver_internal.bidi.log.entry_added.enable = function () {
+    window.test_driver_internal.bidi.log.entry_added.subscribe = function () {
         return subscribe("log.entryAdded")
     };
 
-    window.test_driver_internal.bidi.log.entry_added.disable = function () {
+    window.test_driver_internal.bidi.log.entry_added.unsubscribe = function () {
         return unsubscribe(["log.entryAdded"])
     };
 
