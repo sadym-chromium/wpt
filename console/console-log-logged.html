@@ -16,9 +16,8 @@
         // Wait for the log.entryAdded event to be received.
         const event = await log_entry_promise;
         // Assert the log.entryAdded event has the expected message.
-        const data = event.data;
-        assert_equals(data.args.length, 1);
-        const event_message = data.args[0];
+        assert_equals(event.args.length, 1);
+        const event_message = event.args[0];
         assert_equals(event_message.value, some_message);
         await test_driver.bidi.log.entry_added.disable();
     }, "Assert log event are logged");

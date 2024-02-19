@@ -41,10 +41,10 @@
                 window.__wptrunner_process_next_event();
             }
         } else if (data.type === "testdriver-event") {
-            const event_name = data.status;
             const event_data = JSON.parse(data.message);
+            const event_name = event_data.method;
             const event =new Event(event_name);
-            event.data = event_data;
+            event.payload = event_data.params;
             event_target.dispatchEvent(event);
         }
     });
@@ -186,8 +186,11 @@
     };
 
     window.test_driver_internal.bidi.log.entry_added.on = function (callback) {
-        event_target.addEventListener("log.entryAdded", callback);
-        return () => event_target.removeEventListener("log.entryAdded", callback);
+        const on_event = (event)=> {
+            callback(event.payload);
+        };
+        event_target.addEventListener("log.entryAdded", on_event);
+        return () => event_target.removeEventListener("log.entryAdded", on_event);
     };
 
     window.test_driver_internal.set_test_context = function(context) {
