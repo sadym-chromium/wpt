@@ -43,7 +43,7 @@
         } else if (data.type === "testdriver-event") {
             const event_data = JSON.parse(data.message);
             const event_name = event_data.method;
-            const event =new Event(event_name);
+            const event = new Event(event_name);
             event.payload = event_data.params;
             event_target.dispatchEvent(event);
         }

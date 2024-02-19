@@ -8,7 +8,7 @@ import threading
 import time
 import traceback
 import uuid
-from typing import Any, Awaitable, Callable, List, Optional, Mapping, MutableMapping
+from typing import Any, Awaitable, Callable, Optional, Mapping
 from urllib.parse import urljoin
 
 from .base import (CallbackHandler,
@@ -70,7 +70,7 @@ class WebDriverBaseProtocolPart(BaseProtocolPart):
         """
         if not self.webdriver.bidi_session:
             # Fallback to the Classic way, if BiDi is not available.
-            return execute_script(script, asynchronous=True, context=context)
+            return self.execute_script(script, asynchronous=True, args=args)
 
         wrapped_script = """async function(...args){
                 return new Promise((resolve, reject) => {
@@ -468,10 +468,12 @@ class WebDriverVirtualSensorPart(VirtualSensorProtocolPart):
 
 
 class WebDriverEventsProtocolPart(EventsProtocolPart):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.webdriver = None
+
     def setup(self):
         self.webdriver = self.parent.webdriver
-        # Loop is needed, as WebDiver BiDi commands are coroutines.
-        self.loop = self.parent.loop
 
     async def subscribe(self, event):
         self.logger.info("Subscribing to event %s" % event)
@@ -484,7 +486,7 @@ class WebDriverEventsProtocolPart(EventsProtocolPart):
     def add_event_listener(
             self,
             fn: Callable[[str, Mapping[str, Any]], Awaitable[Any]],
-            name: Optional[str]=None
+            name: Optional[str] = None
     ) -> Callable[[], None]:
         print("adding event listener", name)
         return self.webdriver.bidi_session.add_event_listener(name=name, fn=fn)

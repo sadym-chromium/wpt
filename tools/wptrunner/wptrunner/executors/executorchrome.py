@@ -17,7 +17,6 @@ from .executorwebdriver import (
     WebDriverCrashtestExecutor,
     WebDriverFedCMProtocolPart,
     WebDriverBidiProtocol,
-    WebDriverProtocol,
     WebDriverRefTestExecutor,
     WebDriverRun,
     WebDriverTestharnessExecutor,
