@@ -49,7 +49,7 @@
      */
     window.test_driver = {
         /**
-         * @namespace {bidi} - Represents `WebDriver BiDi <https://w3c.github.io/webdriver-bidi>`_ protocol.
+         Represents `WebDriver BiDi <https://w3c.github.io/webdriver-bidi>`_ protocol.
          */
         bidi: {
             /**
