@@ -2,6 +2,7 @@
 
 import traceback
 from http.client import HTTPConnection
+from typing import Any, Awaitable, Callable, Optional, Mapping
 
 from abc import ABCMeta, abstractmethod
 from typing import ClassVar, List, Type
@@ -338,6 +339,18 @@ class EventsProtocolPart(ProtocolPart):
         """Unsubscribe from events.
 
         :param events: The names of the events to subscribe from."""
+        pass
+
+    @abstractmethod
+    def add_event_listener(
+            self,
+            fn: Callable[[str, Mapping[str, Any]], Awaitable[Any]],
+            event: Optional[str] = None
+    ) -> Callable[[], None]:
+        """Add an event listener.
+
+        :param fn: The function to call when the event is received.
+        :param event: The name of the event to listen for. If None, the function"""
         pass
 
 

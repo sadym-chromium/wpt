@@ -486,10 +486,10 @@ class WebDriverEventsProtocolPart(EventsProtocolPart):
     def add_event_listener(
             self,
             fn: Callable[[str, Mapping[str, Any]], Awaitable[Any]],
-            name: Optional[str] = None
+            event: Optional[str] = None
     ) -> Callable[[], None]:
-        print("adding event listener", name)
-        return self.webdriver.bidi_session.add_event_listener(name=name, fn=fn)
+        print("adding event listener %s" % event)
+        return self.webdriver.bidi_session.add_event_listener(name=event, fn=fn)
 
 
 class WebDriverProtocol(Protocol):
