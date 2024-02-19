@@ -26,6 +26,18 @@ class BidiSessionSubscribeAction:
         return self.protocol.events.subscribe(payload["event"])
 
 
+class BidiSessionUnsubscribeAction:
+    name = "bidi.session.unsubscribe"
+
+    def __init__(self, logger, protocol):
+        self.logger = logger
+        self.protocol = protocol
+
+    def __call__(self, payload):
+        self.logger.debug("Unsubscribing from events: %s" % payload["events"])
+        return self.protocol.events.unsubscribe(payload["events"])
+
+
 class DeleteAllCookiesAction:
     name = "delete_all_cookies"
 
@@ -490,4 +502,5 @@ actions = [ClickAction,
            UpdateVirtualSensorAction,
            RemoveVirtualSensorAction,
            GetVirtualSensorInformationAction,
-           BidiSessionSubscribeAction]
+           BidiSessionSubscribeAction,
+           BidiSessionUnsubscribeAction]

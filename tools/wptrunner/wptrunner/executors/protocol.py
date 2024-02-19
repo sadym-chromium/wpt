@@ -333,6 +333,13 @@ class EventsProtocolPart(ProtocolPart):
         :param event: The name of the event to subscribe to."""
         pass
 
+    @abstractmethod
+    def unsubscribe(self, events):
+        """Unsubscribe from events.
+
+        :param events: The names of the events to subscribe from."""
+        pass
+
 
 class CookiesProtocolPart(ProtocolPart):
     """Protocol part for managing cookies"""

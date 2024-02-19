@@ -477,6 +477,10 @@ class WebDriverEventsProtocolPart(EventsProtocolPart):
         self.logger.info("Subscribing to event %s" % event)
         return await self.webdriver.bidi_session.session.subscribe(events=[event], contexts=None)
 
+    async def unsubscribe(self, events):
+        self.logger.info("Unsubscribing from events %s" % events)
+        return await self.webdriver.bidi_session.session.unsubscribe(events=events, contexts=None)
+
     def add_event_listener(
             self,
             fn: Callable[[str, Mapping[str, Any]], Awaitable[Any]],

@@ -53,26 +53,6 @@
          */
         bidi: {
             /**
-             * `session <https://w3c.github.io/webdriver-bidi/#module-session>`_ module.
-             */
-            session: {
-                /**
-                 * Subscribe to event.
-                 *
-                 * Events will be Matches the behaviour of the `session.subscribe
-                 * <https://w3c.github.io/webdriver-bidi/#command-session-subscribe>`_ WebDriver BiDi command.
-                 *
-                 * @param {String} event - The event to subscribe to.
-                 * @param {WindowProxy} context - Browsing context in which
-                 *                                to run the call, or null for the current
-                 *                                browsing context.
-                 * @return {Promise<never>}
-                 */
-                subscribe: function (event, context = null) {
-                    return window.test_driver_internal.bidi.session.subscribe(event, context);
-                }
-            },
-            /**
              * `log <https://w3c.github.io/webdriver-bidi/#module-log>`_ module.
              */
             log: {
@@ -80,6 +60,20 @@
                  * `log.entryAdded <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event.
                  */
                 entry_added: {
+                    /**
+                     * Enable the `log.entryAdded` event.
+                     * @return {Promise<void>}
+                     */
+                    enable: async function () {
+                        return window.test_driver_internal.bidi.log.entry_added.enable();
+                    },
+                    /**
+                     * Disable the `log.entryAdded` event.
+                     * @return {Promise<void>}
+                     */
+                    disable: async function () {
+                        return window.test_driver_internal.bidi.log.entry_added.disable();
+                    },
                     /**
                      * Add an event listener for the `log.entryAdded
                      * <https://w3c.github.io/webdriver-bidi/#event-log-entryAdded>`_ event.
@@ -1097,15 +1091,16 @@
         in_automation: false,
 
         bidi: {
-            session: {
-                subscribe(event, context=null) {
-                    throw new Error("bidi.session.subscribe() is not implemented by testdriver-vendor.js");
-                },
-            },
             log: {
                 entry_added: {
+                    enable: function () {
+                        throw new Error("bidi.log.entry_added.enable is not implemented by testdriver-vendor.js");
+                    },
+                    disable: function () {
+                        throw new Error("bidi.log.entry_added.disable is not implemented by testdriver-vendor.js");
+                    },
                     on: function () {
-                        throw new Error("bidi.log.entry_added is not implemented by testdriver-vendor.js");
+                        throw new Error("bidi.log.entry_added.on is not implemented by testdriver-vendor.js");
                     }
                 }
             }
