@@ -54,6 +54,30 @@
          */
         bidi: {
             /**
+             * `browsingContext <https://w3c.github.io/webdriver-bidi/#module-browsingContext>`_ module.
+             */
+            browsing_context: {
+                /**
+                 * `browsingContext.getTree <https://w3c.github.io/webdriver-bidi/#command-browsingContext-getTree>`_ command.
+                 * @param {{max_depth?: number, root?: (string | Window)}} props - Parameters for the command.
+                 * @return {Promise<void>}
+                 */
+                get_tree: async function(props) {
+                    return window.test_driver_internal.bidi.browsing_context.get_tree(props);
+                },
+                locate_nodes: async function(props) {
+                    return window.test_driver_internal.bidi.browsing_context.locate_nodes(props);
+                }
+            },
+            /**
+             * `input <https://w3c.github.io/webdriver-bidi/#module-input>`_ module.
+             */
+            input: {
+                click: async function(props) {
+                    return window.test_driver_internal.bidi.input.click(props);
+                }
+            },
+            /**
              * `log <https://w3c.github.io/webdriver-bidi/#module-log>`_ module.
              */
             log: {
@@ -1075,6 +1099,19 @@
         in_automation: false,
 
         bidi: {
+            browsing_context: {
+                get_tree: function () {
+                    throw new Error("bidi.browsing_context.get_tree is not implemented by testdriver-vendor.js");
+                },
+                locate_nodes: function () {
+                    throw new Error("bidi.browsing_context.locate_nodes is not implemented by testdriver-vendor.js");
+                }
+            },
+            input: {
+                click: function () {
+                    throw new Error("bidi.browsing_context.get_tree is not implemented by testdriver-vendor.js");
+                },
+            },
             log: {
                 entry_added: {
                     subscribe: function () {

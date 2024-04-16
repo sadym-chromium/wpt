@@ -37,7 +37,9 @@ from .protocol import (BaseProtocolPart,
                        RPHRegistrationsProtocolPart,
                        FedCMProtocolPart,
                        VirtualSensorProtocolPart,
+                       BidiBrowsingContextProtocolPart,
                        BidiEventsProtocolPart,
+                       BidiInputProtocolPart,
                        BidiScriptProtocolPart,
                        merge_dicts)
 
@@ -107,6 +109,33 @@ addEventListener("__test_restart", e => {e.preventDefault(); callback(true)})"""
                 self.logger.error(message)
                 break
         return False
+
+
+class WebDriverBidiBrowsingContextProtocolPart(BidiBrowsingContextProtocolPart):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.webdriver = None
+
+    def setup(self):
+        self.webdriver = self.parent.webdriver
+
+    async def get_tree(self, root=None, max_depth=None):
+        return await self.webdriver.bidi_session.browsing_context.get_tree(root=root, max_depth=max_depth)
+
+    async def locate_nodes(self, context, locator):
+        return await self.webdriver.bidi_session.browsing_context.locate_nodes(context=context, locator=locator)
+
+
+class WebDriverBidiInputProtocolPart(BidiInputProtocolPart):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.webdriver = None
+
+    def setup(self):
+        self.webdriver = self.parent.webdriver
+
+    async def perform_actions(self, actions, context):
+        return await self.webdriver.bidi_session.input.perform_actions(context=context, actions=actions)
 
 
 class WebDriverBidiEventsProtocolPart(BidiEventsProtocolPart):
@@ -569,7 +598,9 @@ class WebDriverProtocol(Protocol):
 
 class WebDriverBidiProtocol(WebDriverProtocol):
     enable_bidi = True
-    implements = [WebDriverBidiEventsProtocolPart,
+    implements = [WebDriverBidiBrowsingContextProtocolPart,
+                  WebDriverBidiEventsProtocolPart,
+                  WebDriverBidiInputProtocolPart,
                   WebDriverBidiScriptProtocolPart,
                   *(part for part in WebDriverProtocol.implements)
                   ]

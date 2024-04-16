@@ -2,10 +2,9 @@
 
 import traceback
 from http.client import HTTPConnection
-from typing import Any, Awaitable, Callable, Optional, Mapping
+from typing import ClassVar, List, Type, Any, Awaitable, Callable, Optional, Mapping
 
 from abc import ABCMeta, abstractmethod
-from typing import ClassVar, List, Type
 
 
 def merge_dicts(target, source):
@@ -319,6 +318,40 @@ class AccessibilityProtocolPart(ProtocolPart):
         """Return the computed accessibility role for a specific element.
 
         :param element: A protocol-specific handle to an element."""
+        pass
+
+
+class BidiBrowsingContextProtocolPart(ProtocolPart):
+    """Protocol part for managing BiDi events"""
+    __metaclass__ = ABCMeta
+    name = "bidi_browsing_context"
+
+    @abstractmethod
+    async def get_tree(self, root=None, max_depth=None):
+        """
+        Get the tree of browsing contexts.
+        :param root: The root of the tree. If `None`, returns all the browsing contexts.
+        :param max_depth: The maximum depth of the tree to return. If `None`, returns the entire tree.
+        :return: The tree of browsing contexts.
+        """
+        pass
+
+    @abstractmethod
+    async def locate_nodes(self, context, locator):
+        pass
+
+
+class BidiInputProtocolPart(ProtocolPart):
+    """Protocol part for managing BiDi events"""
+    __metaclass__ = ABCMeta
+    name = "bidi_input"
+
+    @abstractmethod
+    async def perform_actions(self, actions, context):
+        """
+        Perform a sequence of actions in a specific context as specified in
+        https://w3c.github.io/webdriver-bidi/#command-input-performActions
+        """
         pass
 
 

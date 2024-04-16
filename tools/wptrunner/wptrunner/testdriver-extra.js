@@ -196,7 +196,36 @@
 
     window.test_driver_internal.in_automation = true;
 
-    window.test_driver_internal.bidi.log.entry_added.subscribe = function (props) {
+    window.test_driver_internal.bidi.browsing_context.get_tree = function (props) {
+        return create_action("bidi.browsing_context.get_tree", props);
+    }
+    window.test_driver_internal.bidi.browsing_context.locate_nodes = function (props) {
+        return create_action("bidi.browsing_context.locate_nodes", props);
+    }
+
+    window.test_driver_internal.bidi.input.click = function (props) {
+        const actions = [{
+            type: "pointer",
+            id: "main_mouse",
+            actions: [{
+                "type": "pointerMove",
+                "x": 0,
+                "y": 0,
+                "origin": props.origin
+            }, {
+                "type": "pointerDown",
+                "button": 0,
+            }, {
+                "type": "pointerUp",
+                "button": 0,
+            }]
+        }]
+
+        return create_action("bidi.input.perform_actions", {context: props.context, actions});
+    }
+
+    window.test_driver_internal.bidi.log.entry_added.
+        subscribe = function (props) {
         return subscribe({
             ...(props ?? {}),
             events: ["log.entryAdded"]
