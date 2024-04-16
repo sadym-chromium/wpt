@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<meta charset="utf-8">
+<title>Test console log are present</title>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
+<script src="/resources/testdriver.js"></script>
+<script src="/resources/testdriver-vendor.js"></script>
+
+<iframe src="support/iframe_sandbox_007.htm" sandbox="allow-scripts allow-same-origin allow-top-navigation"></iframe>
+<script type="text/javascript">
+    promise_test(async () => {
+        const tree = await test_driver.bidi.browsing_context.get_tree({root: window});
+        const iframe = tree[0].children[0];
+        const submit_button_selector_result = await test_driver.bidi.browsing_context.locate_nodes({
+            context: iframe.context,
+            locator: {type: "css", value: "#submitButton"}
+        });
+        const submit_button_shared_id = submit_button_selector_result.nodes[0].sharedId;
+        await test_driver.bidi.input.click({
+            context: iframe.context,
+            origin: {
+                type: "element",
+                element: {
+                    sharedId: submit_button_shared_id
+                }
+            }
+        });
+
+        // Wait is required to avoid false-positive passes.
+        // TODO: replace wait with a more efficient method.
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        const success_message_selector_result = await test_driver.bidi.browsing_context.locate_nodes({
+            context: iframe.context,
+            locator: {type: "innerText", value: "PASS!!!"}
+        });
+
+        assert_equals(success_message_selector_result.nodes.length, 0);
+    }, "Block form submission inside iframe with sandbox attribute.");
+</script>

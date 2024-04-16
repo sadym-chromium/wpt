@@ -2,6 +2,7 @@
 import sys
 
 from typing import Dict, List, Literal, Optional, Union
+from typing_extensions import NotRequired, TypedDict
 
 
 # TODO: check if type annotation is supported by all the required versions of Python.
@@ -12,12 +13,89 @@ class WindowProxyProperties(Dict):
 
 # TODO: check if type annotation is supported by all the required versions of Python.
 # noinspection PyCompatibility
-class WindowProxyRemoteValue(Dict):
+class WindowProxyRemoteValue(TypedDict):
     """
     WebDriver BiDi browsing context descriptor.
     """
     type: Literal["window"]
     value: WindowProxyProperties
+
+
+class BidiBrowsingContextGetTreeAction:
+    name = "bidi.browsing_context.get_tree"
+
+    # TODO: check if type annotation is supported by all the required versions of Python.
+    # noinspection PyCompatibility
+    class Payload(TypedDict):
+        max_depth: NotRequired[int]
+        root: NotRequired[Union[WindowProxyRemoteValue, str]]
+
+    def __init__(self, logger, protocol):
+        self.logger = logger
+        self.protocol = protocol
+
+    async def __call__(self, payload: Payload):
+        root = None
+        if "root" in payload:
+            root = payload["root"]
+            if isinstance(root, dict) and "type" in root and root["type"] == "window":
+                root = root["value"]["context"]
+        return await self.protocol.bidi_browsing_context.get_tree(root)
+
+
+class BidiBrowsingContextLocateNodesAction:
+    name = "bidi.browsing_context.locate_nodes"
+
+    # TODO: check if type annotation is supported by all the required versions of Python.
+    # noinspection PyCompatibility
+    class Payload(TypedDict):
+        context: Union[WindowProxyRemoteValue, str]
+        locator: List[Dict]
+
+    def __init__(self, logger, protocol):
+        self.logger = logger
+        self.protocol = protocol
+
+    async def __call__(self, payload: Payload):
+        context = payload["context"]
+        if isinstance(context, dict) and "type" in context and context["type"] == "window":
+            context = context["value"]["context"]
+        return await self.protocol.bidi_browsing_context.locate_nodes(context, payload["locator"])
+
+
+# TODO: check if type annotation is supported by all the required versions of Python.
+# noinspection PyCompatibility
+class SourceActions(TypedDict):
+    """
+    WebDriver BiDi browsing context descriptor.
+    """
+    type: Literal["window"]
+    value: WindowProxyProperties
+
+
+class BidiInputPerformAction:
+    name = "bidi.input.perform_actions"
+
+    # TODO: check if type annotation is supported by all the required versions of Python.
+    # noinspection PyCompatibility
+    class Payload(TypedDict):
+        context: Union[str, WindowProxyRemoteValue]
+        actions: List[Dict]
+
+    def __init__(self, logger, protocol):
+        self.logger = logger
+        self.protocol = protocol
+
+    async def __call__(self, payload: Payload):
+        """
+        :param payload: https://w3c.github.io/webdriver-bidi/#command-input-performActions
+        :return:
+        """
+        context = payload["context"]
+        if isinstance(context, dict) and "type" in context and context["type"] == "window":
+            context = context["value"]["context"]
+
+        return await self.protocol.bidi_input.perform_actions(payload["actions"], context)
 
 
 class BidiSessionSubscribeAction:
@@ -54,4 +132,8 @@ class BidiSessionSubscribeAction:
         return await self.protocol.bidi_events.subscribe(events, contexts)
 
 
-async_actions = [BidiSessionSubscribeAction]
+async_actions = [
+    BidiBrowsingContextGetTreeAction,
+    BidiBrowsingContextLocateNodesAction,
+    BidiInputPerformAction,
+    BidiSessionSubscribeAction]
